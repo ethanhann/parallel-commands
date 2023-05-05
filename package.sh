@@ -2,4 +2,4 @@
 
 go build -o ./build/pc
 cd ./build || exit
-zip "pc.zip" pc
+zip -9 "pc.zip" pc
