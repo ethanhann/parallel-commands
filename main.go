@@ -18,7 +18,7 @@ type Config struct {
 
 func main() {
 	var commandFileName string
-	flag.StringVar(&commandFileName, "config", "dev.json", "Default value: dev.json")
+	flag.StringVar(&commandFileName, "config", "pc.json", "Default value: pc.json")
 	flag.Parse()
 
 	config := getConfig(commandFileName)
@@ -26,11 +26,11 @@ func main() {
 }
 
 func getConfig(configFileName string) Config {
-	_, error := os.Stat(configFileName)
+	_, err := os.Stat(configFileName)
 
 	config := Config{}
 
-	if errors.Is(error, os.ErrNotExist) {
+	if errors.Is(err, os.ErrNotExist) {
 		fmt.Println("Config file does not exist:", configFileName)
 		os.Exit(1)
 	}
@@ -58,7 +58,10 @@ func runCommand(command string) {
 	fmt.Println("⚙", command)
 	output, err := exec.Command(name, arg...).CombinedOutput()
 	if err != nil {
-		os.Stderr.WriteString(err.Error())
+		_, err := os.Stderr.WriteString(err.Error())
+		if err != nil {
+			fmt.Println("Could not write to stderr", err.Error())
+		}
 	}
 	fmt.Println(string(output))
 }

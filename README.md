@@ -4,7 +4,7 @@ Simple Golang program to run multiple shell commands in parallel.
 
 ## Configuration
 
-The default config file name is `dev.json`.
+The default config file name is `commands.json`.
 
 Config file format:
 
@@ -31,7 +31,11 @@ Example:
 
 Simply
 ```shell
-./dev 
+./pc
 ```
 
-or 
+Or, with a custom config file:
+
+```shell
+./pc
+```

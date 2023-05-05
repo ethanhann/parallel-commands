@@ -1,4 +1,4 @@
-module dev
+module parallel-commands
 
 go 1.20
 
