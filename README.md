@@ -1,4 +1,4 @@
-# dev
+# parallel-commands
 
 Simple Golang program to run multiple shell commands in parallel.
 
