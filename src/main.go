@@ -5,9 +5,10 @@ import (
 	"errors"
 	"flag"
 	"fmt"
+	"github.com/fatih/color"
+	"log"
 	"os"
 	"os/exec"
-	"os/signal"
 	"strings"
 	"sync"
 )
@@ -31,8 +32,7 @@ func getConfig(configFileName string) Config {
 	config := Config{}
 
 	if errors.Is(err, os.ErrNotExist) {
-		fmt.Println("Config file does not exist:", configFileName)
-		os.Exit(1)
+		log.Fatalf("Config file does not exist: %s", configFileName)
 	}
 
 	file, _ := os.ReadFile(configFileName)
@@ -42,37 +42,41 @@ func getConfig(configFileName string) Config {
 
 func runCommands(commands []string) {
 	var wg sync.WaitGroup
-	wg.Add(1)
-	listenForExitSignal()
 	for i := 0; i < len(commands); i++ {
 		wg.Add(1)
-		go runCommand(commands[i])
+		go func(command string) {
+			defer wg.Done()
+			runCommand(command)
+		}(commands[i])
 	}
 	wg.Wait()
+}
+
+func commandExists(cmd string) bool {
+	_, err := exec.LookPath(cmd)
+	return err == nil
 }
 
 func runCommand(command string) {
 	parts := strings.Split(command, " ")
 	name := parts[0]
+
+	if !commandExists(name) {
+		log.Printf("Could not run: %s : %s\n", color.CyanString(command), color.RedString("Command does not exist."))
+		return
+	}
+
 	arg := parts[1:]
 	fmt.Println("⚙", command)
-	output, err := exec.Command(name, arg...).CombinedOutput()
-	if err != nil {
-		_, err := os.Stderr.WriteString(err.Error())
-		if err != nil {
-			fmt.Println("Could not write to stderr", err.Error())
-		}
-	}
-	fmt.Println(string(output))
-}
 
-func listenForExitSignal() {
-	c := make(chan os.Signal, 1)
-	signal.Notify(c, os.Interrupt)
-	go func() {
-		for range c {
-			fmt.Println("Goodbye")
-			os.Exit(0)
-		}
-	}()
+	cmd := exec.Command(name, arg...)
+
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+
+	runErr := cmd.Run()
+	if runErr != nil {
+		log.Printf("Could not run: %s : %s\n", color.CyanString(command), color.RedString(runErr.Error()))
+		return
+	}
 }
